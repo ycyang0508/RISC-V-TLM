@@ -25,6 +25,9 @@ namespace riscv_tlm {
     class Debug : sc_core::sc_module {
     public:
 
+        sc_port<cpu_dbg_if> cpu_dbg_port;
+
+
         Debug(riscv_tlm::CPURV32 *cpu, Memory *mem);
         Debug(riscv_tlm::CPURV64 *cpu, Memory *mem);
 
@@ -55,6 +58,7 @@ namespace riscv_tlm {
         unsigned char pyld_array[128]{};
         std::unordered_set<uint32_t> breakpoints;
         riscv_tlm::cpu_types_t cpu_type;
+        sc_core::sc_time default_time{};
     };
 }
 

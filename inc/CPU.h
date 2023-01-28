@@ -23,13 +23,14 @@
 #include "MemoryInterface.h"
 #include "Performance.h"
 #include "Registers.h"
+#include "cpu_dbg_if.h"
 
 namespace riscv_tlm {
 
     typedef enum {RV32, RV64} cpu_types_t;
 
 
-    class CPU : sc_core::sc_module  {
+    class CPU : public sc_core::sc_module,public cpu_dbg_if {
     public:
 
         /* Constructors */
@@ -134,6 +135,35 @@ namespace riscv_tlm {
         bool CPU_step() override;
         Registers<BaseType> *getRegisterBank() { return register_bank; }
 
+        std::uint32_t readDataMem(std::uint32_t addr, int size) {           
+            return mem_intf->readDataMem(addr,size);
+        }
+        void writeDataMem(std::uint32_t addr, std::uint32_t data, int size) {
+            mem_intf->writeDataMem(addr, data, size);
+        }
+
+        void setValue_rv32(unsigned int reg_num, uint32_t value) override {
+            register_bank->setValue(reg_num,value);
+        }
+        uint32_t getValue_rv32(unsigned int reg_num) const override{
+            return register_bank->getValue(reg_num);
+        };
+
+        uint32_t getPC_rv32() const override{
+            return register_bank->getPC();
+        };
+        void setPC_rv32(uint32_t new_pc) override{
+            register_bank->setPC(new_pc);
+        };
+
+        uint32_t getCSR_rv32(int csr) override{
+            return register_bank->getCSR(csr);
+        };
+        void setCSR_rv32(int csr, uint32_t value_in) override{
+            register_bank->setCSR(csr,value_in);
+        }
+
+        
     private:
         Registers<BaseType> *register_bank;
         C_extension<BaseType> *c_inst;
@@ -168,7 +198,7 @@ namespace riscv_tlm {
      * @brief RISC_V CPU 64 bits model
      * @param name name of the module
      */
-    class CPURV64 : public CPU {
+    class CPURV64 : public CPU  {
     public:
         using BaseType = std::uint64_t;
 
@@ -187,6 +217,38 @@ namespace riscv_tlm {
 
         bool CPU_step() override;
         Registers<BaseType> *getRegisterBank() { return register_bank; }
+
+        std::uint32_t readDataMem(std::uint32_t addr, int size) {
+
+            return 0;
+        }
+        void writeDataMem(std::uint32_t addr, std::uint32_t data, int size) {
+
+        }
+        void setValue_rv64(unsigned int reg_num, uint64_t value) override{
+            register_bank->setValue(reg_num,value);
+        }
+        uint64_t getValue_rv64(unsigned int reg_num) const override{
+            return register_bank->getValue(reg_num);
+        };
+
+        uint64_t getPC_rv64() const override{
+
+            return register_bank->getPC();
+        };
+        void setPC_rv64(uint64_t new_pc) override{
+            register_bank->setPC(new_pc);
+        };
+
+        uint64_t getCSR_rv64(int csr) override{
+
+            return register_bank->getCSR(csr);
+        };
+        void setCSR_rv64(int csr, uint64_t value_in) override{
+            register_bank->setCSR(csr,value_in);
+        }
+
+        
 
     private:
         Registers<BaseType> *register_bank;
