@@ -1,0 +1,8 @@
+set debug remote 1
+set remotetimeout -1
+set arch riscv:rv32
+file dhrystone
+target remote :1234
+set $sp = 0x3FFFFF
+set $pc = 0x100c6
+load

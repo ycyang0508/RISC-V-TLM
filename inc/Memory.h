@@ -64,13 +64,15 @@ namespace riscv_tlm {
         // *********************************************
         virtual unsigned int transport_dbg(tlm::tlm_generic_payload &trans);
 
-    private:
-
         /**
          * @brief Memory array in bytes
          */
         std::array<uint8_t, Memory::SIZE> mem{};
 
+
+    private:
+
+        
         /**
          * @brief Log class
          */

@@ -36,6 +36,10 @@ namespace riscv_tlm {
         void send_packet(int m_conn, const std::string &msg);
 
         std::string receive_packet();
+        void parsing_load_cmd(std::string cmd_in);
+        void parsing_memory_cmd(std::string cmd_in);
+        uint32_t string_to_hex(std::string string_in);
+        std::string int_to_string_byte_reverse(uint32_t dat_in);
 
         void handle_gdb_loop();
 

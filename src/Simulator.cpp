@@ -221,12 +221,16 @@ void process_arguments(int argc, char *argv[]) {
 		default:
 			std::cout << "unknown" << std::endl;
 		}
-	}
-
-	if (filename.empty()) {
-		filename = std::string(argv[optind]);
-	}
-
+	}    
+	if (filename.empty()) {        
+        if (argv[optind] != NULL) {
+            filename = std::string(argv[optind]);
+        }
+        else
+        {
+            filename = "";
+        }        
+	}    
 	std::cout << "file: " << filename << '\n';
 }
 

@@ -201,7 +201,8 @@ namespace riscv_tlm {
             }
 
         } else {
-            SC_REPORT_ERROR("Memory", "Open file error");
+            //SC_REPORT_ERROR("Memory", "Open file error");
+            SC_REPORT_WARNING("Memory", "Open file error");
         }
     }
 }
