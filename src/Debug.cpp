@@ -166,7 +166,7 @@ namespace riscv_tlm {
                     //std::cout << "memdeug> " << std::hex  << int_src_addr-1 << " " <<  uint32_t( dbg_mem->mem[int_src_addr-1] ) << std::endl;
                     if (cpu_type == riscv_tlm::RV32) {
                         dbg_cpu32->writeDataMem(int_src_addr++,tmp0_int,1);
-                        std::cout << "memdeug> " << std::hex  << int_src_addr-1 << " " <<  dbg_cpu32->readDataMem(int_src_addr-1,1) << std::endl;
+                        //std::cout << "memdeug> " << std::hex  << int_src_addr-1 << " " <<  dbg_cpu32->readDataMem(int_src_addr-1,1) << std::endl;
                     }
                     else if (cpu_type == riscv_tlm::RV64) {
                         dbg_cpu64->writeDataMem(int_src_addr++,tmp0_int,1);

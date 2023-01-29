@@ -2,12 +2,12 @@ TARGET   = freertos_test
 
 TARGET_ARCH = riscv32
 
-CC       = riscv32-unknown-elf-gcc
+CC       = riscv-none-elf-gcc
 
 # compiling flags here
-CFLAGS = -Wall -I. -O0 -static -march=rv32imac -mabi=ilp32 --specs=nosys.specs
+CFLAGS = -Wall -I. -O0 -static -march=rv32imac_zicsr -mabi=ilp32 --specs=nosys.specs
 
-LINKER   = riscv32-unknown-elf-gcc
+LINKER   = riscv-none-elf-gcc
 # linking flags here
 LDFLAGS   = -I. -static 
 LIBS   = $(EXTRA_LIBS)
@@ -33,8 +33,8 @@ rm       = rm -f
 
 $(BINDIR)/$(TARGET): $(OBJECTS) $(OBJECTS_ASM)
 	$(LINKER) $(CFLAGS) $(LDFLAGS) $(LIBS) $(LIBDIR) $(OBJECTS) $(OBJECTS_ASM) -o $@
-	riscv32-unknown-elf-objdump -d $@ > dump
-	riscv32-unknown-elf-objcopy -Oihex $@ $(TARGET).hex
+	riscv-none-elf-objdump -d $@ > dump
+	riscv-none-elf-objcopy -Oihex $@ $(TARGET).hex
 	@echo "Linking complete!"
 
 $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c

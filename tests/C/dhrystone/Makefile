@@ -5,7 +5,7 @@ TARGET_ARCH = riscv32
 CC       = riscv-none-elf-gcc
 
 # compiling flags here
-CFLAGS = -Wall -I. -O0 -static -march=rv32imac -mabi=ilp32 --specs=nosys.specs -ggdb
+CFLAGS = -Wall -I. -O0 -static -march=rv32imac_zicsr -mabi=ilp32 --specs=nosys.specs -ggdb
 
 
 LINKER   = riscv-none-elf-gcc
