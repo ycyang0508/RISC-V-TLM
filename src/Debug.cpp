@@ -184,7 +184,7 @@ namespace riscv_tlm {
         }
     }
 
-    void Debug::parsing_memory_cmd(std::string cmd_in) {
+    void Debug::do_wr_mem_cmd(std::string cmd_in) {
         char *start_addr = strchr(iobuf, 'M');
         char *end_addr0 = strchr(iobuf, ',');
         char *end_addr1 = strchr(iobuf, ':');
@@ -240,6 +240,41 @@ namespace riscv_tlm {
             //std::cout << "cmd_data0> end of addr "  << int_src_addr << std::endl;
         }
     }
+    std::stringstream Debug::do_rd_mem_cmd(std::string cmd_in) {
+        char *pEnd;
+        long addr = strtol(cmd_in.c_str() + 1, &pEnd, 16);
+        int len = strtol(pEnd + 1, &pEnd, 16);
+        int residual_byte;
+        uint32_t rd_dat;
+        std::stringstream stream;
+        uint8_t c_out;
+
+        stream << std::setfill('0') << std::hex;
+        residual_byte = 0;
+        for (int i = 0; i < len;i++) {
+            if (residual_byte == 0) {
+                if (cpu_type == riscv_tlm::RV32) {
+                    rd_dat = dbg_cpu32->readDataMem(addr,4);
+                }
+                else if (cpu_type == riscv_tlm::RV64) {
+                    rd_dat = dbg_cpu64->readDataMem(addr,4);
+                }
+                else {
+                    std::cout << "Error in " << __FILE__ << " " << __LINE__ << std::endl;
+                }
+                //std::cout << "mem_rd> " << std::hex << addr << " " << std::setfill('0') << std::setw(8) << rd_dat << std::endl;
+                addr += 4;
+                residual_byte = 4;
+            }
+            c_out = uint8_t(rd_dat & 0xFF);
+            rd_dat = rd_dat >> 8;
+            residual_byte--;
+            stream << std::setw(2) << (0xFF & c_out);            
+            //std::cout << "test_rd>" << std::setfill('0') << std::hex << std::setw(2) << (0xFF & c_out) << std::endl;
+        }
+        return stream;
+    }
+
     uint32_t Debug::string_to_hex(std::string string_in) {
         char *c = const_cast<char*>(string_in.c_str());
         std::string out_string = "";
@@ -392,8 +427,7 @@ namespace riscv_tlm {
                 long reg = strtol(msg.c_str() + 1, &pEnd, 16);
                 //int val = strtol(pEnd + 1, nullptr, 16);
                 auto val = string_to_hex(pEnd + 1);
-
-                std::cout << "REG> "  << std::dec  << reg << " " << std::hex << val << std::endl;
+                
                 if (reg < 32) {
                     if (cpu_type == riscv_tlm::RV32) {
                         //register_bank32->setValue(reg , val);
@@ -418,26 +452,13 @@ namespace riscv_tlm {
                 }
                 send_packet(conn, "OK");
             } else if (boost::starts_with(msg, "m")) {
-                char *pEnd;
-                long addr = strtol(msg.c_str() + 1, &pEnd, 16);
-                int len = strtol(pEnd + 1, &pEnd, 16);
 
-                dbg_trans.set_data_ptr(pyld_array);
-                dbg_trans.set_command(tlm::TLM_READ_COMMAND);
-                dbg_trans.set_address(addr);
-                dbg_trans.set_data_length(len);
-                dbg_mem->transport_dbg(dbg_trans);
-
-                std::stringstream stream;
-                stream << std::setfill('0') << std::hex;
-                for (auto &c: pyld_array) {
-                    stream << std::setw(2) << (0xFF & c);
-                }
-
-                send_packet(conn, stream.str());
-
+                auto string_out = do_rd_mem_cmd(msg);
+                send_packet(conn, string_out.str());
+                //std::cout << "test_rd_final> " << string_out.str() << std::endl;
+                
             } else if (boost::starts_with(msg, "M")) {
-                parsing_memory_cmd(msg);                
+                do_wr_mem_cmd(msg);                
                 send_packet(conn, "OK");
             } else if (boost::starts_with(msg, "X")) {
                 uint32_t start_addr,dat_size;
@@ -460,15 +481,15 @@ namespace riscv_tlm {
                         
                         //bkpt = memory_if->CPU_step();
                         //currentPC = register32_if->getPC();                        
-                        bkpt = dbg_cpu32->CPU_step();
                         //currentPC = register_bank32->getPC();
+                        bkpt = dbg_cpu32->CPU_step();                        
                         currentPC = dbg_cpu32->getPC_rv32();
                         
                     } else {
                         //bkpt = memory_if->CPU_step();
-                        //currentPC = register64_if->getPC();
-                        bkpt = dbg_cpu64->CPU_step();                        
+                        //currentPC = register64_if->getPC();                        
                         //currentPC = register_bank64->getPC();                        
+                        bkpt = dbg_cpu64->CPU_step();                        
                         currentPC = dbg_cpu64->getPC_rv64();
                     }
                     sc_core::wait(default_time);
