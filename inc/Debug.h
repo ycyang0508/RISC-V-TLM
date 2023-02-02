@@ -15,6 +15,7 @@
 
 #include "tlm.h"
 #include "tlm_utils/simple_initiator_socket.h"
+ #include <fcntl.h> 
 
 
 #include "CPU.h"
@@ -47,6 +48,7 @@ namespace riscv_tlm {
         void gdb_continue_op();
         void gdb_step_op();
         void handle_gdb_loop();
+        void gdb_continue_op_loop();
 
         static constexpr size_t bufsize = 1024 * 8;
         char iobuf[bufsize]{};
@@ -60,7 +62,8 @@ namespace riscv_tlm {
         unsigned char pyld_array[128]{};
         std::unordered_set<uint32_t> breakpoints;
         riscv_tlm::cpu_types_t cpu_type;
-        sc_core::sc_time default_time{};
+        sc_event gdb_continue_e;
+        sc_core::sc_time default_time{10, sc_core::SC_NS};
     };
 }
 

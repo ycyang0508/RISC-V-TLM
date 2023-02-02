@@ -32,7 +32,10 @@ namespace riscv_tlm {
         dbg_mem = mem;
         cpu_type = riscv_tlm::RV32;
         
-        SC_THREAD(handle_gdb_loop);        
+        SC_THREAD(handle_gdb_loop);      
+        
+        SC_THREAD(gdb_continue_op_loop);                
+          
     }
 
     Debug::Debug(riscv_tlm::CPURV64 *cpu, Memory *mem) : default_time(10, sc_core::SC_NS),sc_module(sc_core::sc_module_name("Debug")) {
@@ -44,6 +47,8 @@ namespace riscv_tlm {
         cpu_type = riscv_tlm::RV64;
         
         SC_THREAD(handle_gdb_loop);
+
+        SC_THREAD(gdb_continue_op_loop);                
     }
 
     Debug::~Debug() = default;
@@ -58,8 +63,10 @@ namespace riscv_tlm {
 
     std::string Debug::receive_packet() {
         ssize_t nbytes = ::recv(conn, iobuf, bufsize, 0);
-
-        if (nbytes == 0) {
+        if (nbytes == -1) {
+            return "";
+        }
+        else if (nbytes == 0) {
             return "";
         } else if (nbytes == 1) {
             return std::string{"+"};
@@ -261,8 +268,15 @@ namespace riscv_tlm {
 
         // std::cout << "Breakpoint hit at 0x" << std::hex << register_bank->getPC() << std::endl;
         send_packet(conn, "S05"); //SIGTRAP
+    }   
+    
+    void Debug::gdb_continue_op_loop() {        
+        while (1) {
+            wait(gdb_continue_e);
+            gdb_continue_op();
+        }
     }
-
+    
     void Debug::gdb_step_op() {
 
         bool breakpoint;
@@ -301,6 +315,12 @@ namespace riscv_tlm {
 
         int sock = socket(AF_INET, SOCK_STREAM, 0);
 
+        auto result = fcntl(sock, F_SETFL, fcntl(sock, F_GETFL, 0) | O_NONBLOCK);
+        if (result < 0) {
+            perror("fcntl O_NONBLOCK failed");
+            exit(0);
+        }
+
         int optval = 1;
         setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval,
                    sizeof(optval));
@@ -313,8 +333,27 @@ namespace riscv_tlm {
         bind(sock, (struct sockaddr *) &addr, sizeof(addr));
         listen(sock, 1);
 
-        socklen_t len = sizeof(addr);
-        conn = accept(sock, (struct sockaddr *) &addr, &len); 
+        while (1) {
+            socklen_t len = sizeof(addr);
+            errno = 0;
+            conn = accept(sock, (struct sockaddr *)&addr, &len);
+            if (errno != EAGAIN) {
+                std::cout << "connecting\n";            
+
+                auto result = fcntl(conn, F_SETFL, fcntl(sock, F_GETFL, 0) | O_NONBLOCK);
+                if (result < 0) {
+                    perror("fcntl O_NONBLOCK failed");
+                    exit(0);
+                }
+
+
+                break;
+            } 
+            else {
+                //std::cout << "re-connect\n";                
+            }
+            wait(default_time*100);            
+        }
 
 
         if (dbg_cpu32 != nullptr) {
@@ -324,7 +363,11 @@ namespace riscv_tlm {
         }
 
         while (true) {
-            std::string msg = receive_packet();
+            std::string msg = "";
+            while (msg.empty()) {
+                msg = receive_packet();
+                wait(default_time*100);  
+            }
 
             if (msg.empty() ) {
                 std::cout << "remote connection seems to be closed, terminating ..."
@@ -448,7 +491,8 @@ namespace riscv_tlm {
             } else if (msg == "vCont?") {
                 send_packet(conn, "vCont;cs");
             } else if (msg == "c") {
-                gdb_continue_op();
+                gdb_continue_e.notify();                
+                //gdb_continue_op();
             } else if (msg == "s") {
                 gdb_step_op();
             } else if (boost::starts_with(msg, "vKill")) {
@@ -481,6 +525,7 @@ namespace riscv_tlm {
                           << "' detected, terminating ..." << std::endl;
                 break;
             }
+            wait(default_time);
         }
     }
 
