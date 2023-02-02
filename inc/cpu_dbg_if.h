@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tuple>
 #include <cstdint>
 #include "systemc.h"
 #include "tlm.h"
@@ -33,7 +34,7 @@ namespace riscv_tlm {
 
 
         //control
-        virtual bool CPU_step() = 0;
+        virtual std::tuple<bool,bool> CPU_step() = 0;
 
     };
 

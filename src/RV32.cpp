@@ -102,7 +102,7 @@ namespace riscv_tlm {
         return ret_value;
     }
 
-    bool CPURV32::CPU_step() {
+    std::tuple <bool,bool> CPURV32::CPU_step() {
 
         /* Get new PC value */
         if (dmi_ptr_valid) {
@@ -130,7 +130,8 @@ namespace riscv_tlm {
         perf->codeMemoryRead();
         inst.setInstr(INSTR);
         bool breakpoint = false;
-
+        bool watchpoint = false;
+        
         base_inst->setInstr(INSTR);
         auto deco = base_inst->decode();
 
@@ -179,7 +180,7 @@ namespace riscv_tlm {
 
         perf->instructionsInc();
 
-        return breakpoint;
+        return std::make_tuple(breakpoint,watchpoint);;
     }
 
 

@@ -44,7 +44,8 @@ namespace riscv_tlm {
         std::stringstream do_rd_mem_cmd(std::string cmd_in);
         uint32_t string_to_hex(std::string string_in);
         std::string int_to_string_byte_reverse(uint32_t dat_in);
-
+        void gdb_continue_op();
+        void gdb_step_op();
         void handle_gdb_loop();
 
         static constexpr size_t bufsize = 1024 * 8;

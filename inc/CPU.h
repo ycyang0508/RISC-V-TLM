@@ -10,7 +10,7 @@
 #define CPU_BASE_H
 
 #define SC_INCLUDE_DYNAMIC_PROCESSES
-
+#include <tuple>
 #include "systemc"
 #include "tlm.h"
 #include "tlm_utils/simple_initiator_socket.h"
@@ -49,7 +49,7 @@ namespace riscv_tlm {
          * @brief Perform one instruction step
          * @return Breackpoint found (TBD, always true)
          */
-        virtual bool CPU_step() = 0;
+        virtual std::tuple <bool,bool> CPU_step() = 0;
 
         /**
          * @brief Instruction Memory bus socket
@@ -132,7 +132,7 @@ namespace riscv_tlm {
          */
         ~CPURV32() override;
 
-        bool CPU_step() override;
+        std::tuple <bool,bool> CPU_step() override;
         Registers<BaseType> *getRegisterBank() { return register_bank; }
 
         std::uint32_t readDataMem(std::uint32_t addr, int size) {           
@@ -215,7 +215,7 @@ namespace riscv_tlm {
          */
         ~CPURV64() override;
 
-        bool CPU_step() override;
+        std::tuple <bool,bool> CPU_step() override;
         Registers<BaseType> *getRegisterBank() { return register_bank; }
 
         std::uint32_t readDataMem(std::uint32_t addr, int size) {

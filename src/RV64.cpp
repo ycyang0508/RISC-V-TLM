@@ -100,7 +100,7 @@ namespace riscv_tlm {
         return ret_value;
     }
 
-    bool CPURV64::CPU_step() {
+    std::tuple <bool,bool> CPURV64::CPU_step() {
 
         /* Get new PC value */
         if (dmi_ptr_valid) {
@@ -128,6 +128,8 @@ namespace riscv_tlm {
         perf->codeMemoryRead();
         inst.setInstr(INSTR);
         bool breakpoint = false;
+        bool watchpoint = false;
+
 
         base_inst->setInstr(INSTR);
         auto deco = base_inst->decode();
@@ -177,7 +179,7 @@ namespace riscv_tlm {
 
         perf->instructionsInc();
 
-        return breakpoint;
+        return std::make_tuple(breakpoint,watchpoint);
     }
 
     void CPURV64::call_interrupt(tlm::tlm_generic_payload &m_trans,

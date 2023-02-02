@@ -31,28 +31,8 @@ namespace riscv_tlm {
         register_bank64 = nullptr;
         dbg_mem = mem;
         cpu_type = riscv_tlm::RV32;
-
-        /*
-        int sock = socket(AF_INET, SOCK_STREAM, 0);
-
-        int optval = 1;
-        setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval,
-                   sizeof(optval));
-
-        sockaddr_in addr{};
-        addr.sin_family = AF_INET;
-        addr.sin_addr.s_addr = INADDR_ANY;
-        addr.sin_port = htons(1234);
-
-        bind(sock, (struct sockaddr *) &addr, sizeof(addr));
-        listen(sock, 1);
-
-        socklen_t len = sizeof(addr);
-        conn = accept(sock, (struct sockaddr *) &addr, &len); 
-        handle_gdb_loop(); 
-        */
-        SC_THREAD(handle_gdb_loop);
         
+        SC_THREAD(handle_gdb_loop);        
     }
 
     Debug::Debug(riscv_tlm::CPURV64 *cpu, Memory *mem) : default_time(10, sc_core::SC_NS),sc_module(sc_core::sc_module_name("Debug")) {
@@ -62,25 +42,6 @@ namespace riscv_tlm {
         register_bank64 = nullptr;
         dbg_mem = mem;
         cpu_type = riscv_tlm::RV64;
-        /*
-        int sock = socket(AF_INET, SOCK_STREAM, 0);
-
-        int optval = 1;
-        setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval,
-                   sizeof(optval));
-
-        sockaddr_in addr{};
-        addr.sin_family = AF_INET;
-        addr.sin_addr.s_addr = INADDR_ANY;
-        addr.sin_port = htons(1234);
-
-        bind(sock, (struct sockaddr *) &addr, sizeof(addr));
-        listen(sock, 1);
-
-        socklen_t len = sizeof(addr);
-        conn = accept(sock, (struct sockaddr *) &addr, &len); 
-        handle_gdb_loop(); 
-        */
         
         SC_THREAD(handle_gdb_loop);
     }
@@ -129,7 +90,6 @@ namespace riscv_tlm {
         uint32_t int_src_addr = stoi(src_addr,nullptr,16);
         uint32_t int_cp_size = stoi(cp_size,nullptr,16);
         //std::cout << "cmdInfo> " << src_addr << " " << std::hex << int_src_addr  << " "<< std::hex  << cp_size << " " << int_cp_size  << std::endl;
-
                
         auto special_cnt = 0;        
         if (int_cp_size > 0) {
@@ -157,30 +117,18 @@ namespace riscv_tlm {
                         tmp0_int = 0x20 | tmp0_int;
                         specal_char = false;
                     }
-
-                    
-                    //memory_if->writeDataMem(int_src_addr++,tmp0_int,1);
-                    //std::cout << "memdeug> " << std::hex  << int_src_addr-1 << " " <<  uint16_t(memory_if->readDataMem(int_src_addr-1,1) ) << std::endl;
-
-                    //dbg_mem->mem[int_src_addr++] = tmp0_int;
-                    //std::cout << "memdeug> " << std::hex  << int_src_addr-1 << " " <<  uint32_t( dbg_mem->mem[int_src_addr-1] ) << std::endl;
+                                       
                     if (cpu_type == riscv_tlm::RV32) {
-                        dbg_cpu32->writeDataMem(int_src_addr++,tmp0_int,1);
-                        //std::cout << "memdeug> " << std::hex  << int_src_addr-1 << " " <<  dbg_cpu32->readDataMem(int_src_addr-1,1) << std::endl;
+                        dbg_cpu32->writeDataMem(int_src_addr++,tmp0_int,1);                        
                     }
                     else if (cpu_type == riscv_tlm::RV64) {
-                        dbg_cpu64->writeDataMem(int_src_addr++,tmp0_int,1);
-                        //std::cout << "memdeug> " << std::hex  << int_src_addr-1 << " " <<  dbg_cpu64->readDataMem(int_src_addr-1,1) << std::endl;
+                        dbg_cpu64->writeDataMem(int_src_addr++,tmp0_int,1);                        
                     }
                     else {
                         std::cout << "Error in " << __FILE__ << " " << __LINE__ << std::endl;
                     }
-                }
-
-                //std::cout << "cmd_data1> "  << c[i] << " " << uint32_t(tmp_int) << " " <<  uint32_t(dbg_mem->mem[int_src_addr-1])  << std::endl; 
-            }
-            //std::cout << "length_info0> " << int_cp_size  << " " << dat_out.length()-3 << " "  << special_cnt << std::endl;
-            //std::cout << "cmd_data0> end of addr "  << int_src_addr << std::endl;
+                }                
+            }            
         }
     }
 
@@ -206,8 +154,7 @@ namespace riscv_tlm {
             auto specal_char = false;
             
             for (auto i = 0; i < dat_out.length();i++) {
-                uint8_t tmp0_int = uint8_t(c[i+0]);
-                //out_string += std::string(c[i+0]);
+                uint8_t tmp0_int = uint8_t(c[i+0]);                
                 out_string += c[i+0];
                 out_cnt++;
 
@@ -215,29 +162,18 @@ namespace riscv_tlm {
                     uint8_t tmp0_int = stoi(out_string,nullptr,16);
                     out_cnt = 0;
                     out_string = "";
-                    //std::cout << "cmd_data0> " << int_src_addr <<  " " << uint32_t(tmp0_int) << " " <<  uint32_t(dbg_mem->mem[int_src_addr]) << std::endl;
-                    //dbg_mem->mem[int_src_addr++] = tmp0_int;
-                    
+
                     if (cpu_type == riscv_tlm::RV32) {
-                        dbg_cpu32->writeDataMem(int_src_addr++,tmp0_int,1);
-                        std::cout << "memdeug> " << std::hex  << int_src_addr-1 << " " <<  dbg_cpu32->readDataMem(int_src_addr-1,1) << std::endl;
+                        dbg_cpu32->writeDataMem(int_src_addr++,tmp0_int,1);                        
                     }
                     else if (cpu_type == riscv_tlm::RV64) {
-                        dbg_cpu64->writeDataMem(int_src_addr++,tmp0_int,1);
-                        //std::cout << "memdeug> " << std::hex  << int_src_addr-1 << " " <<  dbg_cpu64->readDataMem(int_src_addr-1,1) << std::endl;
+                        dbg_cpu64->writeDataMem(int_src_addr++,tmp0_int,1);                        
                     }
                     else {
                         std::cout << "Error in " << __FILE__ << " " << __LINE__ << std::endl;
                     }
-
-
                 }
-
-
-                //std::cout << "cmd_data1> "  << c[i] << " " << uint32_t(tmp_int) << " " <<  uint32_t(dbg_mem->mem[int_src_addr-1])  << std::endl; 
             }
-            //std::cout << "length_info0> " << int_cp_size  << " " << dat_out.length()-3 << " "  << special_cnt << std::endl;
-            //std::cout << "cmd_data0> end of addr "  << int_src_addr << std::endl;
         }
     }
     std::stringstream Debug::do_rd_mem_cmd(std::string cmd_in) {
@@ -300,6 +236,65 @@ namespace riscv_tlm {
         return out_string;
     }
 
+    void Debug::gdb_continue_op() {
+        bool breakpoint_hit = false;
+        bool bkpt = false;
+        bool whpt = false;
+        do {
+            std::uint64_t currentPC;
+
+            if (cpu_type == riscv_tlm::RV32) {                                               
+                std::tie(bkpt,whpt) = dbg_cpu32->CPU_step();                        
+                currentPC = dbg_cpu32->getPC_rv32();
+                
+            } else {                        
+                std::tie(bkpt,whpt) = dbg_cpu64->CPU_step();                        
+                currentPC = dbg_cpu64->getPC_rv64();
+            }
+            sc_core::wait(default_time);
+
+            auto search = breakpoints.find(currentPC);
+            if (search != breakpoints.end()) {
+                breakpoint_hit = true;
+            }
+        } while ((breakpoint_hit == false) && (bkpt == false));
+
+        // std::cout << "Breakpoint hit at 0x" << std::hex << register_bank->getPC() << std::endl;
+        send_packet(conn, "S05"); //SIGTRAP
+    }
+
+    void Debug::gdb_step_op() {
+
+        bool breakpoint;
+        if (cpu_type == riscv_tlm::RV32) {
+            dbg_cpu32->CPU_step();            
+        } else {
+            dbg_cpu64->CPU_step();            
+        }
+        sc_core::wait(default_time);
+
+        std::uint64_t currentPC;
+        if (cpu_type == riscv_tlm::RV32) {
+            currentPC = dbg_cpu32->getPC_rv32();
+            
+        } else {
+            currentPC = dbg_cpu64->getPC_rv64();
+        }
+
+        auto search = breakpoints.find(currentPC);
+        if (search != breakpoints.end()) {
+            breakpoint = true;
+        } else {
+            breakpoint = false;
+        }
+
+        if (breakpoint) {
+            send_packet(conn, "S03"); //SIGQUIT      
+        } else {
+            send_packet(conn, "S05"); //SIGTRAP
+        }
+
+    }
 
     void Debug::handle_gdb_loop() {
         std::cout << "Handle_GDB_Loop\n";
@@ -371,7 +366,8 @@ namespace riscv_tlm {
                         out_str = out_str + tmp;                        
                     }
                     else if (cpu_type == riscv_tlm::RV64) {
-                        std::cout << "TBD\n";
+                        auto tmp = int_to_string_byte_reverse(dbg_cpu64->getValue_rv64(i));
+                        out_str = out_str + tmp;                            
                     }
                     else {
                         std::cout << "Error\n";
@@ -382,36 +378,24 @@ namespace riscv_tlm {
                 long n = strtol(msg.c_str() + 1, nullptr, 16);
                 std::uint64_t reg_value = 0;
                 if (n < 32) {
-                    if (cpu_type == riscv_tlm::RV32) {
-                        //reg_value = register_bank32->getValue(n);
-                        reg_value = dbg_cpu32->getValue_rv32(n);
-                        //reg_value = register32_if->getValue(n);
-                    } else {
-                        //reg_value = register_bank64->getValue(n);
-                        reg_value = dbg_cpu64->getValue_rv64(n);
-                        //reg_value = register64_if->getValue(n);
+                    if (cpu_type == riscv_tlm::RV32) {                        
+                        reg_value = dbg_cpu32->getValue_rv32(n);                        
+                    } else {                        
+                        reg_value = dbg_cpu64->getValue_rv64(n);                        
                     }
                 } else if (n == 32) {
-                    if (cpu_type == riscv_tlm::RV32) {
-                        //reg_value = register_bank32->getPC();
-                        reg_value = dbg_cpu32->getPC_rv32();
-                        //reg_value = register32_if->getPC();
-                    } else {
-                        //reg_value = register_bank64->getPC();
-                        reg_value = dbg_cpu64->getPC_rv64();
-                        //reg_value = register64_if->getPC();
+                    if (cpu_type == riscv_tlm::RV32) {                        
+                        reg_value = dbg_cpu32->getPC_rv32();                        
+                    } else {                        
+                        reg_value = dbg_cpu64->getPC_rv64();                        
                     }
                 } else {
                     // see: https://github.com/riscv/riscv-gnu-toolchain/issues/217
                     // risc-v register 834
-                    if (cpu_type == riscv_tlm::RV32) {
-                        //reg_value = register_bank32->getCSR(n - 65);
-                        reg_value = dbg_cpu32->getCSR_rv32(n - 65);
-                        //reg_value = register32_if->getCSR(n - 65);
-                    } else {
-                        //reg_value = register_bank64->getCSR(n - 65);
-                        reg_value = dbg_cpu64->getCSR_rv64(n - 65);
-                        //reg_value = register64_if->getCSR(n - 65);
+                    if (cpu_type == riscv_tlm::RV32) {                        
+                        reg_value = dbg_cpu32->getCSR_rv32(n - 65);                        
+                    } else {                        
+                        reg_value = dbg_cpu64->getCSR_rv64(n - 65);                        
                     }
                 }
                 std::stringstream stream;
@@ -429,25 +413,17 @@ namespace riscv_tlm {
                 auto val = string_to_hex(pEnd + 1);
                 
                 if (reg < 32) {
-                    if (cpu_type == riscv_tlm::RV32) {
-                        //register_bank32->setValue(reg , val);
-                        dbg_cpu32->setValue_rv32(reg , val);
-                        //register32_if->setValue(reg , val);
-                    } else {
-                        //register_bank64->setValue(reg , val);
-                        dbg_cpu64->setValue_rv64(reg , val);
-                        //register64_if->setValue(reg , val);
+                    if (cpu_type == riscv_tlm::RV32) {                        
+                        dbg_cpu32->setValue_rv32(reg , val);                        
+                    } else {                        
+                        dbg_cpu64->setValue_rv64(reg , val);                        
                     }
                 }
                 else {
-                    if (cpu_type == riscv_tlm::RV32) {
-                        //register_bank32->setPC(val);
-                        dbg_cpu32->setPC_rv32(val);
-                        //register32_if->setPC(val);
-                    } else {
-                        //register_bank64->setPC(val);
-                        dbg_cpu64->setPC_rv64(val);
-                        //register64_if->setPC(val);
+                    if (cpu_type == riscv_tlm::RV32) {                        
+                        dbg_cpu32->setPC_rv32(val);                        
+                    } else {                        
+                        dbg_cpu64->setPC_rv64(val);                        
                     }
                 }
                 send_packet(conn, "OK");
@@ -472,71 +448,9 @@ namespace riscv_tlm {
             } else if (msg == "vCont?") {
                 send_packet(conn, "vCont;cs");
             } else if (msg == "c") {
-                bool breakpoint_hit = false;
-                bool bkpt = false;
-                do {
-                    std::uint64_t currentPC;
-
-                    if (cpu_type == riscv_tlm::RV32) {
-                        
-                        //bkpt = memory_if->CPU_step();
-                        //currentPC = register32_if->getPC();                        
-                        //currentPC = register_bank32->getPC();
-                        bkpt = dbg_cpu32->CPU_step();                        
-                        currentPC = dbg_cpu32->getPC_rv32();
-                        
-                    } else {
-                        //bkpt = memory_if->CPU_step();
-                        //currentPC = register64_if->getPC();                        
-                        //currentPC = register_bank64->getPC();                        
-                        bkpt = dbg_cpu64->CPU_step();                        
-                        currentPC = dbg_cpu64->getPC_rv64();
-                    }
-                    sc_core::wait(default_time);
-
-                    auto search = breakpoints.find(currentPC);
-                    if (search != breakpoints.end()) {
-                        breakpoint_hit = true;
-                    }
-                } while ((breakpoint_hit == false) && (bkpt == false));
-
-                // std::cout << "Breakpoint hit at 0x" << std::hex << register_bank->getPC() << std::endl;
-                send_packet(conn, "S05");
+                gdb_continue_op();
             } else if (msg == "s") {
-
-                bool breakpoint;
-                if (cpu_type == riscv_tlm::RV32) {
-                    dbg_cpu32->CPU_step();
-                    //memory_if->CPU_step();
-                } else {
-                    dbg_cpu64->CPU_step();
-                    //memory_if->CPU_step();
-                }
-                sc_core::wait(default_time);
-
-                std::uint64_t currentPC;
-                if (cpu_type == riscv_tlm::RV32) {
-                    //currentPC = register_bank32->getPC();
-                    currentPC = dbg_cpu32->getPC_rv32();
-                    
-                } else {
-                    //currentPC = register_bank64->getPC();
-                    currentPC = dbg_cpu64->getPC_rv64();
-                }
-
-                auto search = breakpoints.find(currentPC);
-                if (search != breakpoints.end()) {
-                    breakpoint = true;
-                } else {
-                    breakpoint = false;
-                }
-
-                if (breakpoint) {
-                    send_packet(conn, "S03");
-                } else {
-                    send_packet(conn, "S05");
-                }
-
+                gdb_step_op();
             } else if (boost::starts_with(msg, "vKill")) {
                 send_packet(conn, "OK");
                 break;
