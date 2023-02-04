@@ -142,9 +142,10 @@ namespace riscv_tlm {
             }
 
             mem_addr = this->regs->getValue(rs1);
-            data = this->mem_intf->readDataMem(mem_addr, 4);
+            data = this->mem_intf->readDataMem(mem_addr, 4);            
             this->perf->dataMemoryRead();
             this->regs->setValue(rd, static_cast<int32_t>(data));
+            this->perf->mark_mem_io_type(MEM_IO_RD,mem_addr,4);
 
             TLB_reserve(mem_addr);
 
@@ -171,6 +172,7 @@ namespace riscv_tlm {
             if (TLB_reserved(mem_addr)) {
                 this->mem_intf->writeDataMem(mem_addr, data, 4);
                 this->perf->dataMemoryWrite();
+                this->perf->mark_mem_io_type(MEM_IO_WR,mem_addr,4);
                 this->regs->setValue(rd, 0);  // SC writes 0 to rd on success
             } else {
                 this->regs->setValue(rd, 1);  // SC writes nonzero on failure
@@ -199,6 +201,8 @@ namespace riscv_tlm {
             mem_addr = this->regs->getValue(rs1);
             data = this->mem_intf->readDataMem(mem_addr, 4);
             this->perf->dataMemoryRead();
+            this->perf->mark_mem_io_type(MEM_IO_RD,mem_addr,4);
+
             this->regs->setValue(rd, static_cast<int32_t>(data));
 
             // swap
@@ -207,6 +211,7 @@ namespace riscv_tlm {
 
             this->mem_intf->writeDataMem(mem_addr, aux, 4);
             this->perf->dataMemoryWrite();
+            this->perf->mark_mem_io_type(MEM_IO_WR,mem_addr,4);
 
             this->logger->debug("{} ns. PC: 0x{:x}. A.AMOSWAP");
 
@@ -227,6 +232,7 @@ namespace riscv_tlm {
             mem_addr = this->regs->getValue(rs1);
             data = this->mem_intf->readDataMem(mem_addr, 4);
             this->perf->dataMemoryRead();
+            this->perf->mark_mem_io_type(MEM_IO_RD,mem_addr,4);
 
             this->regs->setValue(rd, static_cast<int32_t>(data));
 
@@ -235,7 +241,8 @@ namespace riscv_tlm {
 
             this->mem_intf->writeDataMem(mem_addr, data, 4);
             this->perf->dataMemoryWrite();
-
+            this->perf->mark_mem_io_type(MEM_IO_WR,mem_addr,4);
+            
             this->logger->debug("{} ns. PC: 0x{:x}. A.AMOADD");
 
             return true;
@@ -255,6 +262,7 @@ namespace riscv_tlm {
             mem_addr = this->regs->getValue(rs1);
             data = this->mem_intf->readDataMem(mem_addr, 4);
             this->perf->dataMemoryRead();
+            this->perf->mark_mem_io_type(MEM_IO_RD,mem_addr,4);
 
             this->regs->setValue(rd, static_cast<int32_t>(data));
 
@@ -263,7 +271,8 @@ namespace riscv_tlm {
 
             this->mem_intf->writeDataMem(mem_addr, data, 4);
             this->perf->dataMemoryWrite();
-
+            this->perf->mark_mem_io_type(MEM_IO_WR,mem_addr,4);
+            
             this->logger->debug("{} ns. PC: 0x{:x}. A.AMOXOR");
 
             return true;
@@ -283,6 +292,7 @@ namespace riscv_tlm {
             mem_addr = this->regs->getValue(rs1);
             data = this->mem_intf->readDataMem(mem_addr, 4);
             this->perf->dataMemoryRead();
+            this->perf->mark_mem_io_type(MEM_IO_RD,mem_addr,4);
 
             this->regs->setValue(rd, static_cast<int32_t>(data));
 
@@ -291,7 +301,8 @@ namespace riscv_tlm {
 
             this->mem_intf->writeDataMem(mem_addr, data, 4);
             this->perf->dataMemoryWrite();
-
+            this->perf->mark_mem_io_type(MEM_IO_WR,mem_addr,4);
+            
             this->logger->debug("{} ns. PC: 0x{:x}. A.AMOAND");
 
             return true;
@@ -311,6 +322,7 @@ namespace riscv_tlm {
             mem_addr = this->regs->getValue(rs1);
             data = this->mem_intf->readDataMem(mem_addr, 4);
             this->perf->dataMemoryRead();
+            this->perf->mark_mem_io_type(MEM_IO_RD,mem_addr,4);
 
             this->regs->setValue(rd, static_cast<int32_t>(data));
 
@@ -319,7 +331,8 @@ namespace riscv_tlm {
 
             this->mem_intf->writeDataMem(mem_addr, data, 4);
             this->perf->dataMemoryWrite();
-
+            this->perf->mark_mem_io_type(MEM_IO_WR,mem_addr,4);
+            
             this->logger->debug("{} ns. PC: 0x{:x}. A.AMOOR");
 
             return true;
@@ -340,6 +353,7 @@ namespace riscv_tlm {
             mem_addr = this->regs->getValue(rs1);
             data = this->mem_intf->readDataMem(mem_addr, 4);
             this->perf->dataMemoryRead();
+            this->perf->mark_mem_io_type(MEM_IO_RD,mem_addr,4);
 
             this->regs->setValue(rd, static_cast<int32_t>(data));
 
@@ -351,7 +365,8 @@ namespace riscv_tlm {
 
             this->mem_intf->writeDataMem(mem_addr, aux, 4);
             this->perf->dataMemoryWrite();
-
+            this->perf->mark_mem_io_type(MEM_IO_WR,mem_addr,4);
+            
             this->logger->debug("{} ns. PC: 0x{:x}. A.AMOMIN");
 
             return true;
@@ -372,6 +387,7 @@ namespace riscv_tlm {
             mem_addr = this->regs->getValue(rs1);
             data = this->mem_intf->readDataMem(mem_addr, 4);
             this->perf->dataMemoryRead();
+            this->perf->mark_mem_io_type(MEM_IO_RD,mem_addr,4);
 
             this->regs->setValue(rd, static_cast<int32_t>(data));
 
@@ -383,7 +399,8 @@ namespace riscv_tlm {
 
             this->mem_intf->writeDataMem(mem_addr, aux, 4);
             this->perf->dataMemoryWrite();
-
+            this->perf->mark_mem_io_type(MEM_IO_WR,mem_addr,4);
+            
             this->logger->debug("{} ns. PC: 0x{:x}. A.AMOMAX");
 
             return true;
@@ -404,6 +421,7 @@ namespace riscv_tlm {
             mem_addr = this->regs->getValue(rs1);
             data = this->mem_intf->readDataMem(mem_addr, 4);
             this->perf->dataMemoryRead();
+            this->perf->mark_mem_io_type(MEM_IO_RD,mem_addr,4);
 
             this->regs->setValue(rd, static_cast<int32_t>(data));
 
@@ -415,6 +433,7 @@ namespace riscv_tlm {
 
             this->mem_intf->writeDataMem(mem_addr, aux, 4);
             this->perf->dataMemoryWrite();
+            this->perf->mark_mem_io_type(MEM_IO_WR,mem_addr,4);
 
             this->logger->debug("{} ns. PC: 0x{:x}. A.AMOMINU");
 
@@ -436,6 +455,7 @@ namespace riscv_tlm {
             mem_addr = this->regs->getValue(rs1);
             data = this->mem_intf->readDataMem(mem_addr, 4);
             this->perf->dataMemoryRead();
+            this->perf->mark_mem_io_type(MEM_IO_RD,mem_addr,4);
 
             this->regs->setValue(rd, static_cast<int32_t>(data));
 
@@ -447,6 +467,7 @@ namespace riscv_tlm {
 
             this->mem_intf->writeDataMem(mem_addr, aux, 4);
             this->perf->dataMemoryWrite();
+            this->perf->mark_mem_io_type(MEM_IO_WR,mem_addr,4);
 
             this->logger->debug("{} ns. PC: 0x{:x}. A.AMOMAXU");
 

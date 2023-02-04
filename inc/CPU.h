@@ -132,6 +132,8 @@ namespace riscv_tlm {
          */
         ~CPURV32() override;
 
+        bool find_watchpoint();
+        
         std::tuple <bool,bool> CPU_step() override;
         Registers<BaseType> *getRegisterBank() { return register_bank; }
 
@@ -214,6 +216,8 @@ namespace riscv_tlm {
          * @brief Destructor
          */
         ~CPURV64() override;
+
+        bool find_watchpoint();
 
         std::tuple <bool,bool> CPU_step() override;
         Registers<BaseType> *getRegisterBank() { return register_bank; }

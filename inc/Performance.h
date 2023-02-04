@@ -11,9 +11,14 @@
 
 #define SC_INCLUDE_DYNAMIC_PROCESSES
 
+#include <tuple>
 #include "systemc"
 
 #include "tlm.h"
+
+typedef enum {MEM_IO_NONE,MEM_IO_RD,MEM_IO_WR} mem_io_type_t;
+
+
 
 /**
  * @brief Performance indicators class
@@ -86,6 +91,19 @@ public:
 	inline uint_fast64_t getInstructions() const {
 	  return instructions_executed;
 	}
+
+    mem_io_type_t mem_io_type;
+    uint64_t      mem_io_addr;
+    uint64_t      mem_io_size;
+    void mark_mem_io_type(mem_io_type_t io_type_in,uint64_t addr_in,uint64_t dat_size) {
+        mem_io_type = io_type_in;
+        mem_io_addr = addr_in;
+        mem_io_size = dat_size;
+    }
+
+    std::tuple<mem_io_type_t,uint64_t,uint64_t> get_watchpoint_info() {
+        return {mem_io_type,mem_io_addr,mem_io_size};
+    }
 
 private:
 	static Performance *instance;

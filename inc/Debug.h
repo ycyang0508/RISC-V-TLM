@@ -23,6 +23,39 @@
 
 namespace riscv_tlm {
 
+    typedef struct mem_watchpoint {
+        uint64_t mem_addr   ;
+        uint64_t addr_length;
+
+        /*
+        mem_watchpoint& operator=(const mem_watchpoint &rhs) {
+            mem_addr = rhs.mem_addr;
+            addr_length = rhs.mem_addr;
+        }
+
+        bool operator==(const mem_watchpoint& rhs) const {
+            return ((this->mem_addr == rhs.mem_addr) && (this->addr_length == rhs.addr_length));
+        }
+        size_t operator()(const mem_watchpoint &rhs) const {
+            size_t hash = mem_addr + addr_length;
+            return hash;
+        }
+        */
+        
+    } mem_watchpoint_t;
+
+    /*
+    class hash {
+    public:
+        std::size_t operator()(const mem_watchpoint& rhs) const
+        {
+            return rhs.mem_addr + rhs.addr_length;
+        }
+
+    };
+    */
+     
+
     class Debug : sc_core::sc_module {
     public:
 
@@ -47,6 +80,7 @@ namespace riscv_tlm {
         std::string int_to_string_byte_reverse(uint32_t dat_in);
         void gdb_continue_op();
         void gdb_step_op();
+        void do_gdb_connect();
         void handle_gdb_loop();
         void gdb_continue_op_loop();
 
@@ -61,6 +95,8 @@ namespace riscv_tlm {
         tlm::tlm_generic_payload dbg_trans;
         unsigned char pyld_array[128]{};
         std::unordered_set<uint32_t> breakpoints;
+        std::unordered_set<uint64> mem_wr_watchpoints;
+        std::unordered_set<uint64> mem_rd_watchpoints;
         riscv_tlm::cpu_types_t cpu_type;
         sc_event gdb_continue_e;
         sc_core::sc_time default_time{10, sc_core::SC_NS};

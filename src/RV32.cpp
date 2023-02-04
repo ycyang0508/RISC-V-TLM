@@ -102,7 +102,39 @@ namespace riscv_tlm {
         return ret_value;
     }
 
+    bool CPURV32::find_watchpoint() {
+        mem_io_type_t mem_io_type;
+        uint64_t mem_addr;
+        uint64_t mem_size;
+        //mem_watchpoint_t test_point;
+        bool hit_watchpoint;
+
+        std::tie(mem_io_type, mem_addr,mem_size) = perf->get_watchpoint_info();
+
+        if (mem_io_type == MEM_IO_RD) {
+            hit_watchpoint = false;
+            /*auto search = mem_rd_watchpoints.find(test_point);
+            if (search != mem_rd_watchpoints.end()) {
+                hit_watchpoint = true;
+            } 
+            */ 
+        }
+        else if  (mem_io_type == MEM_IO_WR) {
+            hit_watchpoint = false;
+            /*auto search = mem_wr_watchpoints.find(test_point);
+            if (search != mem_wr_watchpoints.end()) {
+                hit_watchpoint = true;
+            }*/
+            
+        } else {
+            hit_watchpoint = false;
+        }
+        return hit_watchpoint;
+    }
+
     std::tuple <bool,bool> CPURV32::CPU_step() {
+
+        perf->mark_mem_io_type(MEM_IO_NONE,0,0);
 
         /* Get new PC value */
         if (dmi_ptr_valid) {
@@ -125,16 +157,15 @@ namespace riscv_tlm {
                     dmi_ptr = dmi_data.get_dmi_ptr();
                 }
             }
-        }
-
+        }        
         perf->codeMemoryRead();
+        
         inst.setInstr(INSTR);
         bool breakpoint = false;
         bool watchpoint = false;
         
         base_inst->setInstr(INSTR);
-        auto deco = base_inst->decode();
-
+        auto deco = base_inst->decode();        
         if (deco != OP_ERROR) {
             auto PC_not_affected = base_inst->exec_instruction(inst, &breakpoint, deco);
             if (PC_not_affected) {
@@ -180,7 +211,7 @@ namespace riscv_tlm {
 
         perf->instructionsInc();
 
-        return std::make_tuple(breakpoint,watchpoint);;
+        return std::make_tuple(breakpoint,watchpoint);
     }
 
 

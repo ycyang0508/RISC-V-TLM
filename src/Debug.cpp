@@ -245,6 +245,7 @@ namespace riscv_tlm {
 
     void Debug::gdb_continue_op() {
         bool breakpoint_hit = false;
+        bool watchpoint_hit = false;
         bool bkpt = false;
         bool whpt = false;
         do {
@@ -307,20 +308,15 @@ namespace riscv_tlm {
         } else {
             send_packet(conn, "S05"); //SIGTRAP
         }
-
     }
 
-    void Debug::handle_gdb_loop() {
-        std::cout << "Handle_GDB_Loop\n";
-
+    void Debug::do_gdb_connect() {
         int sock = socket(AF_INET, SOCK_STREAM, 0);
-
         auto result = fcntl(sock, F_SETFL, fcntl(sock, F_GETFL, 0) | O_NONBLOCK);
         if (result < 0) {
             perror("fcntl O_NONBLOCK failed");
             exit(0);
         }
-
         int optval = 1;
         setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval,
                    sizeof(optval));
@@ -345,8 +341,6 @@ namespace riscv_tlm {
                     perror("fcntl O_NONBLOCK failed");
                     exit(0);
                 }
-
-
                 break;
             } 
             else {
@@ -354,7 +348,12 @@ namespace riscv_tlm {
             }
             wait(default_time*100);            
         }
+    }
 
+    void Debug::handle_gdb_loop() {
+        std::cout << "Handle_GDB_Loop\n";
+
+        do_gdb_connect();
 
         if (dbg_cpu32 != nullptr) {
             register_bank32 = dbg_cpu32->getRegisterBank();
@@ -474,7 +473,6 @@ namespace riscv_tlm {
 
                 auto string_out = do_rd_mem_cmd(msg);
                 send_packet(conn, string_out.str());
-                //std::cout << "test_rd_final> " << string_out.str() << std::endl;
                 
             } else if (boost::starts_with(msg, "M")) {
                 do_wr_mem_cmd(msg);                
@@ -498,6 +496,40 @@ namespace riscv_tlm {
             } else if (boost::starts_with(msg, "vKill")) {
                 send_packet(conn, "OK");
                 break;
+            } else if (boost::starts_with(msg, "Z3")) {
+                char *pEnd;
+                long addr = strtol(msg.c_str() + 3, &pEnd, 16);
+                mem_watchpoint_t watchpoint;
+                watchpoint.mem_addr = addr;
+                watchpoint.addr_length = 4;
+                mem_rd_watchpoints.insert(watchpoint.mem_addr);
+                std::cout << "read watchpoint set to address 0x" << std::hex << addr << std::endl;
+                send_packet(conn, "OK");
+            } else if (boost::starts_with(msg, "z3")) {
+                char *pEnd;
+                long addr = strtol(msg.c_str() + 3, &pEnd, 16);
+                mem_watchpoint_t watchpoint;
+                watchpoint.mem_addr = addr;
+                watchpoint.addr_length = 4;
+                mem_rd_watchpoints.erase(watchpoint.mem_addr);
+                send_packet(conn, "OK"); 
+            } else if (boost::starts_with(msg, "Z2")) {
+                char *pEnd;
+                long addr = strtol(msg.c_str() + 3, &pEnd, 16);
+                mem_watchpoint_t watchpoint;
+                watchpoint.mem_addr = addr;
+                watchpoint.addr_length = 4;
+                mem_wr_watchpoints.insert(watchpoint.mem_addr);                
+                std::cout << "write watchpoint set to address 0x" << std::hex << addr << std::endl;
+                send_packet(conn, "OK");
+            } else if (boost::starts_with(msg, "z2")) {
+                char *pEnd;
+                long addr = strtol(msg.c_str() + 3, &pEnd, 16);
+                mem_watchpoint_t watchpoint;
+                watchpoint.mem_addr = addr;
+                watchpoint.addr_length = 4;
+                mem_wr_watchpoints.erase(watchpoint.mem_addr);
+                send_packet(conn, "OK");            
             } else if (boost::starts_with(msg, "Z1")) {
                 char *pEnd;
                 long addr = strtol(msg.c_str() + 3, &pEnd, 16);

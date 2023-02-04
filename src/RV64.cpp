@@ -100,8 +100,29 @@ namespace riscv_tlm {
         return ret_value;
     }
 
+    bool CPURV64::find_watchpoint() {
+        mem_io_type_t mem_io_type;
+        uint64_t mem_addr;
+        uint64_t mem_size;
+        bool hit_watchpoint;
+
+        std::tie(mem_io_type,mem_addr,mem_size) = perf->get_watchpoint_info();
+
+        if (mem_io_type == MEM_IO_RD) {
+            hit_watchpoint = false;
+        }
+        else if  (mem_io_type == MEM_IO_WR) {
+            hit_watchpoint = false;
+        } else {
+            hit_watchpoint = false;
+        }
+        return hit_watchpoint;
+    }
+
     std::tuple <bool,bool> CPURV64::CPU_step() {
 
+        perf->mark_mem_io_type(MEM_IO_NONE,0,0);
+        
         /* Get new PC value */
         if (dmi_ptr_valid) {
             /* if memory_offset at Memory module is set, this won't work */
@@ -130,7 +151,6 @@ namespace riscv_tlm {
         bool breakpoint = false;
         bool watchpoint = false;
 
-
         base_inst->setInstr(INSTR);
         auto deco = base_inst->decode();
 
@@ -139,7 +159,6 @@ namespace riscv_tlm {
             if (PC_not_affected) {
                 register_bank->incPC();
             }
-
         } else {
             c_inst->setInstr(INSTR);
             auto c_deco = c_inst->decode();

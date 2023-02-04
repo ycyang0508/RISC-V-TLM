@@ -532,9 +532,10 @@ namespace riscv_tlm {
             imm = get_imm_I();
 
             mem_addr = imm + this->regs->getValue(rs1);
-            data = static_cast<std::int8_t>(this->mem_intf->readDataMem(mem_addr, 1));
+            data = static_cast<std::int8_t>(this->mem_intf->readDataMem(mem_addr, 1));            
             this->perf->dataMemoryRead();
             this->regs->setValue(rd, data);
+            this->perf->mark_mem_io_type(MEM_IO_RD,mem_addr,1);
 
             this->logger->debug("{} ns. PC: 0x{:x}. LB: x{:d} + x{:d}(0x{:x}) -> x{:d}",
                                 sc_core::sc_time_stamp().value(),
@@ -556,8 +557,9 @@ namespace riscv_tlm {
 
             mem_addr = imm + this->regs->getValue(rs1);
             data = static_cast<std::int16_t>(this->mem_intf->readDataMem(mem_addr, 2));
-            this->perf->dataMemoryRead();
+            this->perf->dataMemoryRead();            
             this->regs->setValue(rd, data);
+            this->perf->mark_mem_io_type(MEM_IO_RD,mem_addr,2);
 
             this->logger->debug("{} ns. PC: 0x{:x}. LH: x{:d} + x{:d}(0x{:x}) -> x{:d}",
                                 sc_core::sc_time_stamp().value(),
@@ -579,9 +581,9 @@ namespace riscv_tlm {
 
             mem_addr = imm + this->regs->getValue(rs1);
             data = static_cast<std::int32_t>(this->mem_intf->readDataMem(mem_addr, 4));
-
-            this->perf->dataMemoryRead();
+            this->perf->dataMemoryRead();            
             this->regs->setValue(rd, data);
+            this->perf->mark_mem_io_type(MEM_IO_RD,mem_addr,4);
 
             this->logger->debug("{} ns. PC: 0x{:x}. LW: x{:d} + x{:d}(0x{:x}) -> x{:d}(0x{:x})",
                                 sc_core::sc_time_stamp().value(),
@@ -603,9 +605,9 @@ namespace riscv_tlm {
 
             mem_addr = imm + this->regs->getValue(rs1);
             data =  static_cast<std::uint8_t>(this->mem_intf->readDataMem(mem_addr, 1));
-
-            this->perf->dataMemoryRead();
+            this->perf->dataMemoryRead();            
             this->regs->setValue(rd, data);
+            this->perf->mark_mem_io_type(MEM_IO_RD,mem_addr,1);
 
             this->logger->debug("{} ns. PC: 0x{:x}. LBU: x{:d} + x{:d}(0x{:x}) -> x{:d}(0x{:x})",
                                 sc_core::sc_time_stamp().value(),
@@ -627,9 +629,9 @@ namespace riscv_tlm {
 
             mem_addr = imm + this->regs->getValue(rs1);
             data =  static_cast<std::uint16_t>(this->mem_intf->readDataMem(mem_addr, 2));
-
-            this->perf->dataMemoryRead();
+            this->perf->dataMemoryRead();            
             this->regs->setValue(rd, data);
+            this->perf->mark_mem_io_type(MEM_IO_RD,mem_addr,2);
 
             this->logger->debug("{} ns. PC: 0x{:x}. LHU: x{:d} + x{:d}(0x{:x}) -> x{:d}(0x{:x})",
                                 sc_core::sc_time_stamp().value(),
@@ -651,9 +653,9 @@ namespace riscv_tlm {
 
             mem_addr = imm + this->regs->getValue(rs1);
             data = this->mem_intf->readDataMem(mem_addr, 4);
-
-            this->perf->dataMemoryRead();
+            this->perf->dataMemoryRead();            
             this->regs->setValue(rd, data);
+            this->perf->mark_mem_io_type(MEM_IO_RD,mem_addr,4);
 
             this->logger->debug("{} ns. PC: 0x{:x}. LWU: x{:d} + x{:d}(0x{:x}) -> x{:d}(0x{:x})",
                                 sc_core::sc_time_stamp().value(),
@@ -682,8 +684,9 @@ namespace riscv_tlm {
             std::uint64_t aux = static_cast<std::uint32_t>(this->mem_intf->readDataMem(mem_addr + 4, 4));
             data |= aux << 32;
 
-            this->perf->dataMemoryRead();
+            this->perf->dataMemoryRead();                        
             this->regs->setValue(rd, data);
+            this->perf->mark_mem_io_type(MEM_IO_RD,mem_addr,8);
 
             this->logger->debug("{} ns. PC: 0x{:x}. LD: 0x{:x}({:d}) + {:d}(0x{:x}) -> x{:d}(0x{:x})",
                                 sc_core::sc_time_stamp().value(),
@@ -713,6 +716,7 @@ namespace riscv_tlm {
 
             this->mem_intf->writeDataMem(mem_addr, data & 0xFFFFFFFF, 4);
             this->mem_intf->writeDataMem(mem_addr + 4, data >> 32, 4);
+            this->perf->mark_mem_io_type(MEM_IO_WR,mem_addr,8);
             this->perf->dataMemoryWrite();
 
             return true;
@@ -734,6 +738,7 @@ namespace riscv_tlm {
 
             this->mem_intf->writeDataMem(mem_addr, data, 1);
             this->perf->dataMemoryWrite();
+            this->perf->mark_mem_io_type(MEM_IO_WR,mem_addr,1);
 
             this->logger->debug("{} ns. PC: 0x{:x}. SB: x{:d} -> x{:d} + 0x{:x}(@0x{:x})",
                                 sc_core::sc_time_stamp().value(),
@@ -759,6 +764,7 @@ namespace riscv_tlm {
 
             this->mem_intf->writeDataMem(mem_addr, data, 2);
             this->perf->dataMemoryWrite();
+            this->perf->mark_mem_io_type(MEM_IO_WR,mem_addr,2);
 
             this->logger->debug("{} ns. PC: 0x{:x}. SH: x{:d} -> x{:d} + 0x{:x}(@0x{:x})",
                                 sc_core::sc_time_stamp().value(),
@@ -784,6 +790,7 @@ namespace riscv_tlm {
 
             this->mem_intf->writeDataMem(mem_addr, data, 4);
             this->perf->dataMemoryWrite();
+            this->perf->mark_mem_io_type(MEM_IO_WR,mem_addr,4);
 
             this->logger->debug("{} ns. PC: 0x{:x}. SW: x{:d}(0x{:x}) -> x{:d} + 0x{:x}(@0x{:x})",
                                 sc_core::sc_time_stamp().value(),
