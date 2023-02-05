@@ -6,6 +6,8 @@
  */
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#pragma  once
+
 #ifndef INC_DEBUG_H_
 #define INC_DEBUG_H_
 
@@ -21,42 +23,39 @@
 #include "CPU.h"
 #include "Memory.h"
 
+
 namespace riscv_tlm {
-
-    typedef struct mem_watchpoint {
-        uint64_t mem_addr   ;
-        uint64_t addr_length;
-
-        /*
-        mem_watchpoint& operator=(const mem_watchpoint &rhs) {
-            mem_addr = rhs.mem_addr;
-            addr_length = rhs.mem_addr;
-        }
-
-        bool operator==(const mem_watchpoint& rhs) const {
+    class mem_watchpoint_t {
+    public:
+        uint32_t mem_addr   ;
+        uint32_t addr_length;
+        bool operator==(const mem_watchpoint_t& rhs) const {
             return ((this->mem_addr == rhs.mem_addr) && (this->addr_length == rhs.addr_length));
         }
-        size_t operator()(const mem_watchpoint &rhs) const {
-            size_t hash = mem_addr + addr_length;
-            return hash;
-        }
-        */
-        
-    } mem_watchpoint_t;
 
-    /*
-    class hash {
+        friend ostream &operator<<(ostream &os , const riscv_tlm::mem_watchpoint_t &rhs) {
+            os << "mem_addr " << rhs.mem_addr << " addr_length "  << rhs.addr_length;
+            return os;
+        }   
+            
+    } ;
+}
+
+
+namespace std
+{
+    template<> class hash<riscv_tlm::mem_watchpoint_t> {
     public:
-        std::size_t operator()(const mem_watchpoint& rhs) const
+        size_t operator()(const riscv_tlm::mem_watchpoint_t& rhs) const
         {
             return rhs.mem_addr + rhs.addr_length;
-        }
+        }        
+    };    
+}
 
-    };
-    */
-     
+namespace riscv_tlm {
 
-    class Debug : sc_core::sc_module {
+   class Debug : sc_core::sc_module {
     public:
 
         sc_port<cpu_dbg_if> cpu_dbg_port;
@@ -80,6 +79,9 @@ namespace riscv_tlm {
         std::string int_to_string_byte_reverse(uint32_t dat_in);
         void gdb_continue_op();
         void gdb_step_op();
+        void insert_watchpoint(uint32_t cmd_type,std::string msg_in) ;
+        void delete_watchpoint(uint32_t cmd_type,std::string msg_in) ;
+        bool find_watchpoint() ;
         void do_gdb_connect();
         void handle_gdb_loop();
         void gdb_continue_op_loop();
@@ -95,12 +97,14 @@ namespace riscv_tlm {
         tlm::tlm_generic_payload dbg_trans;
         unsigned char pyld_array[128]{};
         std::unordered_set<uint32_t> breakpoints;
-        std::unordered_set<uint64> mem_wr_watchpoints;
-        std::unordered_set<uint64> mem_rd_watchpoints;
+        std::unordered_set<mem_watchpoint_t> mem_wr_watchpoints;
+        std::unordered_set<mem_watchpoint_t> mem_rd_watchpoints;        
         riscv_tlm::cpu_types_t cpu_type;
         sc_event gdb_continue_e;
         sc_core::sc_time default_time{10, sc_core::SC_NS};
     };
 }
+
+
 
 #endif /* INC_DEBUG_H_ */

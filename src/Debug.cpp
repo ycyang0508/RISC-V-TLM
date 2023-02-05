@@ -265,7 +265,11 @@ namespace riscv_tlm {
             if (search != breakpoints.end()) {
                 breakpoint_hit = true;
             }
-        } while ((breakpoint_hit == false) && (bkpt == false));
+
+            watchpoint_hit = find_watchpoint();
+            //std::cout << "PC " << std::hex << currentPC << " " << watchpoint_hit << std::endl;
+
+        } while ((breakpoint_hit == false) && (bkpt == false) && (watchpoint_hit == false) );
 
         // std::cout << "Breakpoint hit at 0x" << std::hex << register_bank->getPC() << std::endl;
         send_packet(conn, "S05"); //SIGTRAP
@@ -308,6 +312,175 @@ namespace riscv_tlm {
         } else {
             send_packet(conn, "S05"); //SIGTRAP
         }
+    }
+
+    void Debug::insert_watchpoint(uint32_t cmd_type,std::string msg_in) {
+        
+        mem_watchpoint_t watchpoint;
+        uint32_t kind ;
+        uint32_t result;
+        if (cmd_type == 2) {
+            result = sscanf(msg_in.c_str(), "Z2,%x,%x\0", &watchpoint.mem_addr, &watchpoint.addr_length);            
+            kind = 2;
+        }
+        else if (cmd_type == 3) {
+            result = sscanf(msg_in.c_str(), "Z3,%x,%x\0", &watchpoint.mem_addr, &watchpoint.addr_length);            
+            kind = 3;
+        }
+        else if (cmd_type == 4) {
+            result = sscanf(msg_in.c_str(), "Z4,%x,%x\0", &watchpoint.mem_addr, &watchpoint.addr_length);            
+            kind = 4;
+        }
+        else {
+            kind = 0;
+        }
+
+        if (result != 2) {
+            std::cout << "parsing packet cmd fail\n";
+            send_packet(conn, "");
+        }
+                
+        if (kind == 2) {
+            auto rlt = mem_wr_watchpoints.insert(watchpoint);
+            if (rlt.second == true) {
+                //std::cout << "write watchpoint set to address " << watchpoint << std::endl;
+                send_packet(conn, "OK");            
+            }
+            else {
+                std::cout << "fail in write watchpoint set to address " << watchpoint << std::endl;
+                send_packet(conn, "");      
+            }
+        }
+        else if (kind == 3) {
+            auto rlt = mem_rd_watchpoints.insert(watchpoint);
+            if (rlt.second == true) {
+                //std::cout << "read watchpoint set to address " << watchpoint << std::endl;
+                send_packet(conn, "OK");            
+            }
+            else {
+                std::cout << "fail in write watchpoint set to address " << watchpoint << std::endl;
+                send_packet(conn, "");      
+            }            
+        }
+        else if (kind == 4) {
+            auto rlt = mem_wr_watchpoints.insert(watchpoint);
+            mem_rd_watchpoints.insert(watchpoint);
+            if (rlt.second == true) {
+                //std::cout << "watchpoint set to address " <<  watchpoint << std::endl;
+                send_packet(conn, "OK");            
+            }
+            else {
+                std::cout << "fail in write watchpoint set to address " << watchpoint << std::endl;
+                send_packet(conn, "");      
+            }                        
+        }
+        else {
+            std::cout << "watchpoint fail0" <<  watchpoint << std::endl;
+            send_packet(conn, "");
+        }            
+             
+    }
+
+    void Debug::delete_watchpoint(uint32_t cmd_type,std::string msg_in) {
+        
+        mem_watchpoint_t watchpoint;
+        uint32_t kind ;
+        uint32_t result;
+
+        if (cmd_type == 2) {
+            result = sscanf(msg_in.c_str(), "z2,%x,%x\0", &watchpoint.mem_addr, &watchpoint.addr_length);
+            kind = 2;
+        }
+        else if (cmd_type == 3) {
+            result = sscanf(msg_in.c_str(), "z3,%x,%x\0", &watchpoint.mem_addr, &watchpoint.addr_length);
+            kind = 3;
+        }
+        else if (cmd_type == 4) {
+            result = sscanf(msg_in.c_str(), "z4,%x,%x\0", &watchpoint.mem_addr, &watchpoint.addr_length);
+            kind = 4;
+        }
+        else {
+            kind = 0;
+        }
+        if (result != 2) {
+            std::cout << "parsing packet cmd fail\n";
+            send_packet(conn, "");
+        }
+                              
+        if (kind == 2) {
+            auto it = mem_wr_watchpoints.erase(watchpoint);
+            if (it != 0) {
+                //std::cout << "delete wr watchpoint set to address " <<  watchpoint << std::endl;
+                send_packet(conn, "OK");
+            }
+            else {
+                std::cout << "fail in delete wr watchpoint set to address " <<  watchpoint << std::endl;
+                send_packet(conn, "");
+            }                
+        }
+        else if (kind == 3) {
+            auto it = mem_rd_watchpoints.erase(watchpoint);
+            if (it != 0) {
+                //std::cout << "delete rd watchpoint set to address " <<  watchpoint << std::endl;
+                send_packet(conn, "OK");            
+            }
+            else {
+                std::cout << "fail in delete wr watchpoint set to address " <<  watchpoint << std::endl;
+                send_packet(conn, "");
+            }
+
+        }
+        else if (kind == 4) {
+            auto it0 = mem_wr_watchpoints.erase(watchpoint);
+            auto it1 = mem_rd_watchpoints.erase(watchpoint);
+            if ( (it0 != 0) && (it1 != 0)) {
+                //std::cout << "delete rw watchpoint set to address " <<  watchpoint << std::endl;
+                send_packet(conn, "OK");            
+            }
+            else {
+                std::cout << "fail in delete wr watchpoint set to address " <<  watchpoint << std::endl;
+                send_packet(conn, "");
+            }
+            
+        }
+        else {
+            send_packet(conn, "");
+        }            
+        
+    }
+
+    bool Debug::find_watchpoint() {
+        mem_io_type_t mem_io_type;
+        uint64_t mem_addr;
+        uint64_t mem_size;
+        mem_watchpoint_t test_point;
+        bool hit_watchpoint;
+
+        if (dbg_cpu32 != nullptr)
+            std::tie(mem_io_type, test_point.mem_addr,test_point.addr_length) = dbg_cpu32->perf->get_watchpoint_info();
+        else
+            std::tie(mem_io_type, test_point.mem_addr,test_point.addr_length) = dbg_cpu64->perf->get_watchpoint_info();
+
+
+        if (mem_io_type == MEM_IO_RD) {
+            hit_watchpoint = false;
+            auto search = mem_rd_watchpoints.find(test_point);
+            if (search != mem_rd_watchpoints.end()) {
+                hit_watchpoint = true;
+                std::cout << "hit rd watch point\n";
+            }                                  
+        }
+        else if  (mem_io_type == MEM_IO_WR) {
+            hit_watchpoint = false;
+            auto search = mem_wr_watchpoints.find(test_point);
+            if (search != mem_wr_watchpoints.end()) {
+                hit_watchpoint = true;
+                std::cout << "hit wr watch point\n";
+            }            
+        } else {
+            hit_watchpoint = false;
+        }
+        return hit_watchpoint;
     }
 
     void Debug::do_gdb_connect() {
@@ -375,7 +548,7 @@ namespace riscv_tlm {
             } else if (msg == "+") {
                 // NOTE: just ignore this message, nothing to do in this case
             } else if (boost::starts_with(msg, "qSupported")) {
-                send_packet(conn, "PacketSize=256;swbreak+;hwbreak+;vContSupported+;multiprocess-");
+                send_packet(conn, "PacketSize=256;swbreak+;hwbreak+;vContSupported+;multiprocess-;watchpoints-hw+;watchpoints-sw+");
             } else if (msg == "vMustReplyEmpty") {
                 send_packet(conn, "");
             } else if (msg == "Hg0") {
@@ -496,40 +669,18 @@ namespace riscv_tlm {
             } else if (boost::starts_with(msg, "vKill")) {
                 send_packet(conn, "OK");
                 break;
+            } else if (boost::starts_with(msg, "Z4")) {
+                insert_watchpoint(4,msg);               
+            } else if (boost::starts_with(msg, "z4")) {
+                delete_watchpoint(4,msg);
             } else if (boost::starts_with(msg, "Z3")) {
-                char *pEnd;
-                long addr = strtol(msg.c_str() + 3, &pEnd, 16);
-                mem_watchpoint_t watchpoint;
-                watchpoint.mem_addr = addr;
-                watchpoint.addr_length = 4;
-                mem_rd_watchpoints.insert(watchpoint.mem_addr);
-                std::cout << "read watchpoint set to address 0x" << std::hex << addr << std::endl;
-                send_packet(conn, "OK");
+                insert_watchpoint(3,msg);               
             } else if (boost::starts_with(msg, "z3")) {
-                char *pEnd;
-                long addr = strtol(msg.c_str() + 3, &pEnd, 16);
-                mem_watchpoint_t watchpoint;
-                watchpoint.mem_addr = addr;
-                watchpoint.addr_length = 4;
-                mem_rd_watchpoints.erase(watchpoint.mem_addr);
-                send_packet(conn, "OK"); 
+                delete_watchpoint(3,msg);
             } else if (boost::starts_with(msg, "Z2")) {
-                char *pEnd;
-                long addr = strtol(msg.c_str() + 3, &pEnd, 16);
-                mem_watchpoint_t watchpoint;
-                watchpoint.mem_addr = addr;
-                watchpoint.addr_length = 4;
-                mem_wr_watchpoints.insert(watchpoint.mem_addr);                
-                std::cout << "write watchpoint set to address 0x" << std::hex << addr << std::endl;
-                send_packet(conn, "OK");
+                insert_watchpoint(2,msg);                                               
             } else if (boost::starts_with(msg, "z2")) {
-                char *pEnd;
-                long addr = strtol(msg.c_str() + 3, &pEnd, 16);
-                mem_watchpoint_t watchpoint;
-                watchpoint.mem_addr = addr;
-                watchpoint.addr_length = 4;
-                mem_wr_watchpoints.erase(watchpoint.mem_addr);
-                send_packet(conn, "OK");            
+                delete_watchpoint(2,msg);                
             } else if (boost::starts_with(msg, "Z1")) {
                 char *pEnd;
                 long addr = strtol(msg.c_str() + 3, &pEnd, 16);

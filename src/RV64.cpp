@@ -100,25 +100,6 @@ namespace riscv_tlm {
         return ret_value;
     }
 
-    bool CPURV64::find_watchpoint() {
-        mem_io_type_t mem_io_type;
-        uint64_t mem_addr;
-        uint64_t mem_size;
-        bool hit_watchpoint;
-
-        std::tie(mem_io_type,mem_addr,mem_size) = perf->get_watchpoint_info();
-
-        if (mem_io_type == MEM_IO_RD) {
-            hit_watchpoint = false;
-        }
-        else if  (mem_io_type == MEM_IO_WR) {
-            hit_watchpoint = false;
-        } else {
-            hit_watchpoint = false;
-        }
-        return hit_watchpoint;
-    }
-
     std::tuple <bool,bool> CPURV64::CPU_step() {
 
         perf->mark_mem_io_type(MEM_IO_NONE,0,0);

@@ -98,8 +98,8 @@ namespace riscv_tlm {
 
     public:
         MemoryInterface *mem_intf;
-    protected:
         Performance *perf;
+    protected:        
         std::shared_ptr<spdlog::logger> logger;
         tlm_utils::tlm_quantumkeeper *m_qk;
         Instruction inst;
@@ -131,9 +131,7 @@ namespace riscv_tlm {
          * @brief Destructor
          */
         ~CPURV32() override;
-
-        bool find_watchpoint();
-        
+       
         std::tuple <bool,bool> CPU_step() override;
         Registers<BaseType> *getRegisterBank() { return register_bank; }
 
@@ -217,7 +215,6 @@ namespace riscv_tlm {
          */
         ~CPURV64() override;
 
-        bool find_watchpoint();
 
         std::tuple <bool,bool> CPU_step() override;
         Registers<BaseType> *getRegisterBank() { return register_bank; }
