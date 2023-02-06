@@ -58,7 +58,7 @@ int main( void )
         
         /* Create tasks */
         xTaskCreate(task_1, "Task1", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY+1, NULL);
-	xTaskCreate(task_2, "Task2", 10000, NULL, tskIDLE_PRIORITY+1, NULL);
+	    xTaskCreate(task_2, "Task2", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY+1, NULL);
         xTaskCreate(task_3, "Task3", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY+1, NULL);
         
 	/* Start the kernel.  From here on, only tasks and interrupts will run. */

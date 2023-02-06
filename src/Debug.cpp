@@ -533,7 +533,8 @@ namespace riscv_tlm {
             std::string msg = "";
             while (msg.empty()) {
                 msg = receive_packet();
-                wait(default_time*100);  
+                wait(default_time);  
+                //std::cout << "wait message \n";
             }
 
             if (msg.empty() ) {

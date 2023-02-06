@@ -69,7 +69,12 @@ namespace riscv_tlm::peripherals {
 
                     std::uint64_t notify_time;
                     // notify needs relative time, mtimecmp works in absolute time
-                    notify_time = m_mtimecmp - m_mtime;
+                    if (m_mtimecmp >= m_mtime) {
+                        notify_time = (uint64_t)m_mtimecmp - (uint64_t)m_mtime;  
+                    }
+                    else {
+                        notify_time = (std::numeric_limits<uint64_t>::max() - (uint64_t)m_mtime)+ 1 + m_mtimecmp;                            
+                    }
 
                     timer_event.notify(sc_core::sc_time(notify_time, sc_core::SC_NS));
                     break;
