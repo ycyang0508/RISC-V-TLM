@@ -305,13 +305,8 @@ namespace riscv_tlm {
             breakpoint = true;
         } else {
             breakpoint = false;
-        }
-
-        if (breakpoint) {
-            send_packet(conn, "S03"); //SIGQUIT      
-        } else {
-            send_packet(conn, "S05"); //SIGTRAP
-        }
+        }     
+        send_packet(conn, "S05"); //SIGTRAP
     }
 
     void Debug::insert_watchpoint(uint32_t cmd_type,std::string msg_in) {
@@ -660,7 +655,7 @@ namespace riscv_tlm {
             } else if (msg == "qSymbol::") {
                 send_packet(conn, "OK");
             } else if (msg == "vCont?") {
-                send_packet(conn, "vCont;cs");
+                send_packet(conn, "vCont;cst");
             } else if (msg == "c") {
                 gdb_continue_e.notify();                
                 //gdb_continue_op();
